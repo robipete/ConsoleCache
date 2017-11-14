@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace ConsoleCache
 {
@@ -39,5 +40,22 @@ namespace ConsoleCache
             return c;
         }
 
+        internal void AgeCache(string key) // needed this for fast reordering on GETs, key passed in meant to be the first but works in general
+        {
+            // OK this would/could be more efficient if I could just peel off the last n - 1 elements of the underlying structure as a dictionary!
+            //cache = cache.Skip<Dictionary<string, string>>(1);
+            //cache = (IEnumerable<Dictionary<string, string>>)cache.TakeLast<Dictionary<string,string>>(cache.Count - 1);
+            cache = cache.Where(s => s.Key != key).ToDictionary(s => s.Key, s => s.Value); // excising the first element, a delete by key just leaves the slot open in the dictionary and messes up our ordering with the next add
+           // cache.Add(key, value); // drop newly gotten entry to the end
+        }
+
+        internal void AddCache(string key, string value) // needed this for fast reordering on GETs, key passed in meant to be the first but works in general
+        {
+            // OK this would/could be more efficient if I could just peel off the last n - 1 elements of the underlying structure as a dictionary!
+            //cache = cache.Skip<Dictionary<string, string>>(1);
+            //cache = (IEnumerable<Dictionary<string, string>>)cache.TakeLast<Dictionary<string,string>>(cache.Count - 1);
+            //cache = cache.Where(s => s.Key != key).ToDictionary(s => s.Key, s => s.Value); // excising the first element, a delete by key just leaves the slot open in the dictionary and messes up our ordering with the next add
+            cache.Add(key, value); // drop newly gotten entry to the end
+        }
     }
 }

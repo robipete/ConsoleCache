@@ -12,14 +12,15 @@ namespace ConsoleCache
             // first input is 'special'
             bool getSizeFirst = true;
             string input;
-            Console.WriteLine("Size?");
+            //Console.WriteLine("RobiLabs Console Cache Demonstration Program V0.01");
+            //Console.WriteLine("Size? (SIZE 2)");
             while ((input = Console.ReadLine()).ToLower() != "exit")
             {
                 try
                 {
                     if (getSizeFirst)
                     {
-                        Console.WriteLine(cs.Initialize(input));
+                        Console.WriteLine(cs.Initialize(input)); // throws InvalidOperationException (bad input) 
                         getSizeFirst = false;  // OK got size first, lets move on
                     }
                     else
@@ -27,12 +28,12 @@ namespace ConsoleCache
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Error: " + e.Message);
+                    Console.WriteLine(e.Message);
                 }
             }
         }
 
-        // Maybe the output might change, good to centralize
+        // Maybe the output might change to a log file or something, good to centralize
         internal static void CacheWriteLn(string s)
         {
             Console.WriteLine(s);

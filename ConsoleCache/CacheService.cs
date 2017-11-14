@@ -19,22 +19,27 @@ namespace ConsoleCache
         CacheModel cm = null;
         private int maxParams = 5; // ok that is an 
         private int minParams = 1; // ok that is an 
-        const string getall = "GETALL";
-        const string get = "GET";
-        const string getadd = "ADD";
-        const string gethelp = "HELP";
-        private string[] verbs = { getall, get, getadd, gethelp };
+        private const char space = ' ';
+        private const string size = "SIZE";
+        private const string ok = "OK";
+        private const string getall = "GETALL";
+        private const string get = "GET";
+        private const string set = "SET";
+        private const string gethelp = "HELP";
+        private const string exit = "EXIT";
+        private string[] verbs = { getall, get, set, gethelp, exit }; // list of available commands
+        const string errmsg = "ERROR";
+
         internal string Initialize(string input)
         {
-
-            int size;
-            if (int.TryParse(input, out size))
+            var command = input.Split(space); 
+            if (command.Length == 2 && command[0].Equals(size) && int.TryParse(command[1], out int x))
             {
-                cm = new CacheModel(size); // parsable size as int
-                return "OK";
+                cm = new CacheModel(x); // parsable size as int
+                return size + " " + ok;
             }
             else
-                throw new InvalidOperationException("Must specify cache size as an int before continuing. No spaces. One number."); // bad input
+                throw new InvalidOperationException(errmsg); // bad input
 
         }
 
@@ -44,31 +49,33 @@ namespace ConsoleCache
             if (cm == null)
                 throw new InvalidOperationException("Cache not properly initialized."); // it should be impossible to hit this but... just in case
 
-            var command = input.Split(' ');
+            var command = input.Split(space);
 
-            if (command.Length >= minParams && command.Length <= maxParams) // ok that is rather arbitrary but suppse someone types a paragraph?
+            if (command.Length >= minParams && command.Length <= maxParams) // ok that is rather arbitrary but suppose someone types a paragraph?
                 switch (command[0])
                 {
-                    case getall:
-                        return command.Length == 1 ? DoGetAll() : throw new Exception("Invalid number of arguements."); // length should be passed in, this is cheating
+                    case getall:    // getall useful for debugging! could disable for release builds...
+                        return command.Length == 1 ? DoGetAll() : throw new Exception( errmsg ); // TODO: length should be passed into this method, this is cheating
                     case get:
-                        return command.Length == 2 ? DoGet(command[1]) : throw new Exception("Invalid number of arguements.");
-                    case getadd:
-                        return command.Length == 3 ? DoAdd(command[1], command[2]) : throw new Exception("Invalid number of arguements.");
+                        return command.Length == 2 ? DoGet(command[1]) : throw new Exception( errmsg );
+                    case set:
+                        return command.Length == 3 ? DoAdd(command[1], command[2]) : throw new Exception( errmsg );
+
+
                     case gethelp:
-                        return command.Length == 1 ? DoHelp() : throw new Exception("Invalid number of arguements.");
+                        return command.Length == 1 ? DoHelp() : throw new Exception( errmsg ); // open for expansion here...
 
 
-                    case "OK":
-                        return command.Length == 1 ? DoOk() : throw new Exception("Invalid number of arguements.");
+                    case ok:
+                        return command.Length == 1 ? DoOk() : throw new Exception( errmsg );
 
 
 
                     default:
-                        throw new InvalidOperationException("Invalid verb");
+                        throw new InvalidOperationException("Invalid verb. Type 'HELP' for a list of valid commands.");
                 }
             else
-                throw new InvalidOperationException("Invalid number of operands.");
+                throw new Exception( errmsg );
 
         }
 
@@ -82,30 +89,31 @@ namespace ConsoleCache
             // could I do some reflection magic to dynamically make this list?
             foreach (string s in verbs)
                 CacheController.CacheWriteLn(s);
-            return "OK";
+            return ok;
         }
 
         private string DoAdd(string k, string v)
         {
-            Cache.Add(k, v, cm);
-            return "OK";
+            CacheWorker.Add(k, v, cm);
+            return set + space + ok;
         }
 
         private string DoGet(string k)
         {
-            return Cache.Get(k, cm);
+            return "GOT" + space + CacheWorker.Get(k, cm);
         }
+
         private string DoGetAll()
         {
-            var e = Cache.GetAll(cm);
+            var e = CacheWorker.GetAll(cm);
             while (e.MoveNext())
             {
-                Console.Write(e.Current.Key);
-                Console.Write(" : ");
-                Console.WriteLine(e.Current.Value);
+                CacheController.CacheWrite(e.Current.Key);
+                CacheController.CacheWrite(" : ");
+                CacheController.CacheWriteLn(e.Current.Value);
             }
 
-            return "OK";
+            return ok;
         }
     }
 }
